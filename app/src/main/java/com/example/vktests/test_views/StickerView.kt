@@ -1,7 +1,9 @@
-package com.example.vktests
+package com.example.vktests.test_views
 
 import android.content.Context
+import android.graphics.Canvas
 import android.util.AttributeSet
+import android.util.Log
 import android.view.ScaleGestureDetector
 import android.widget.FrameLayout
 import android.widget.ImageView
@@ -9,19 +11,18 @@ import com.almeros.android.multitouch.MoveGestureDetector
 import com.almeros.android.multitouch.RotateGestureDetector
 import com.example.vktests.touch_listeners.MoveListener
 import com.example.vktests.touch_listeners.RotateListener
+import com.example.vktests.touch_listeners.ScaleListener
 
-class StickerView : ImageView  {
+class StickerView : ImageView {
 
 
     private val mRotateListener = RotateListener()
     private val mMoveListener = MoveListener()
+    private val mScaleListener = ScaleListener()
 
-    val mScaleDetector: ScaleGestureDetector =
-        ScaleGestureDetector(context, ScaleGestureDetector.SimpleOnScaleGestureListener())
-    val mMoveDetector: MoveGestureDetector =
-        MoveGestureDetector(context, MoveGestureDetector.SimpleOnMoveGestureListener())
-    val mRotateDetector: RotateGestureDetector =
-        RotateGestureDetector(context, RotateGestureDetector.SimpleOnRotateGestureListener())
+    val mScaleDetector: ScaleGestureDetector = ScaleGestureDetector(context, mScaleListener)
+    val mMoveDetector: MoveGestureDetector = MoveGestureDetector(context, mMoveListener)
+    val mRotateDetector: RotateGestureDetector = RotateGestureDetector(context, mRotateListener)
 
     constructor(context: Context) : super(context)
     constructor(context: Context, attrs: AttributeSet) : super(context, attrs)
@@ -34,9 +35,9 @@ class StickerView : ImageView  {
         setOnTouchListener { v, event ->
 
             mScaleDetector.onTouchEvent(event)
-//            mMoveDetector.onTouchEvent(event)
+//            mScaleDetector.isQuickScaleEnabled
+            mMoveDetector.onTouchEvent(event)
 //            mRotateDetector.onTouchEvent(event)
-
 
             layoutParams = with(layoutParams as FrameLayout.LayoutParams) {
 
@@ -47,14 +48,13 @@ class StickerView : ImageView  {
                 val scaleCenterY = (stickerHeight * scaleFactor) / 2
                 val scaleCenterX = (stickerWidth * scaleFactor) / 2
 
-                marginStart += (mMoveDetector.focusDelta.x).toInt()
-                topMargin += (mMoveDetector.focusDelta.y).toInt()
+//                marginStart = (mMoveListener.focusX).toInt()
+//                topMargin = (mMoveListener.focusY).toInt()
                 this
             }
 
-            scaleX *= mScaleDetector.scaleFactor
-            scaleY *= mScaleDetector.scaleFactor
-
+            scaleX = mScaleListener.scaleFactor
+            scaleY = mScaleListener.scaleFactor
 
 //            imageMatrix = with(matrix) {
 //                val scaleFactor = mScaleDetector.scaleFactor
@@ -65,6 +65,4 @@ class StickerView : ImageView  {
             true
         }
     }
-
-
 }

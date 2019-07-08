@@ -31,6 +31,7 @@ import com.example.vktests.touch_listeners.ScaleListener
 import android.view.ScaleGestureDetector
 import android.opengl.ETC1.getWidth
 import android.opengl.ETC1.getHeight
+import com.example.vktests.test_views.StickerView2
 
 
 class RootActivity : AppCompatActivity(), StickerListDialogFragment.Listener {
@@ -104,7 +105,7 @@ class RootActivity : AppCompatActivity(), StickerListDialogFragment.Listener {
 
     fun addStickerOnScreen(src: String) {
 
-        val sticker = StickerView(this)
+        val sticker = StickerView2(this)
             .apply {
                 scaleX = 0.0f
                 scaleY = 0.0f

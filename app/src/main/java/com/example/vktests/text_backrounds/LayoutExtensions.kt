@@ -6,17 +6,17 @@ import android.text.Layout
 // Extension functions for Layout object
 
 /**
- * Android system default line spacing extra
+ * Android system default line getSpacingBetweenPointers extra
  */
 private const val DEFAULT_LINESPACING_EXTRA = 0f
 
 /**
- * Android system default line spacing multiplier
+ * Android system default line getSpacingBetweenPointers multiplier
  */
 private const val DEFAULT_LINESPACING_MULTIPLIER = 1f
 
 /**
- * Get the line bottom discarding the line spacing added.
+ * Get the line bottom discarding the line getSpacingBetweenPointers added.
  */
 fun Layout.getLineBottomWithoutSpacing(line: Int): Int {
     val lineBottom = getLineBottom(line)

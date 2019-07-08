@@ -37,6 +37,7 @@ dependencies {
     kapt "com.github.bumptech.glide:compiler:4.9.0"
 
     implementation 'com.github.Almeros:android-gesture-detectors:v1.0'
+    implementation 'com.davemorrissey.labs:subsampling-scale-image-view:3.10.0'
 
 
     testImplementation 'junit:junit:4.12'
