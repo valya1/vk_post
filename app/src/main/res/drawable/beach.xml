@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list
+        xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:id="@+id/rounding">
+        <shape android:shape="rectangle"
+               android:padding="10dp">
+            <corners android:radius="4dp"/>
+        </shape>
+    </item>
+
+    <item android:drawable="@drawable/bg_beach_center"
+          android:gravity="fill">
+    </item>
+
+    <item android:gravity="top"
+          android:drawable="@drawable/bg_beach_top">
+    </item>
+
+    <item android:gravity="bottom"
+          android:drawable="@drawable/bg_beach_bottom">
+    </item>
+
+</layer-list>

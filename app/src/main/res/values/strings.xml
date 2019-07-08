@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">VKPostLite</string>
+    <string name="btn_save_text">Сохранить</string>
+    <string name="sticker_header">Стикеры</string>
+</resources>
