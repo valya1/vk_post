@@ -65,7 +65,7 @@ class RootActivity : AppCompatActivity(), StickerListDialogFragment.Listener {
             rvBackroundPreviews?.scrollToPosition(clickedPosition)
             backgoundPreviewsAdapter?.setSelectedBackgroundPreview(clickedPosition)
             backgoundPreviewsAdapter?.getBackgroundRes(clickedPosition)?.let { backgroundRes ->
-                containerContent.background = ContextCompat.getDrawable(this, backgroundRes)
+                bgImage.setImageDrawable(ContextCompat.getDrawable(this, backgroundRes))
             }
         }
 
@@ -126,7 +126,7 @@ class RootActivity : AppCompatActivity(), StickerListDialogFragment.Listener {
                     with(sticker) {
                         uiHandler.post {
                             setImageDrawable(resource)
-                            containerContent.addView(this)
+                            containerContent.addView(this, 1)
                             animate()
                                 .scaleX(1.0f)
                                 .scaleY(1.0f)

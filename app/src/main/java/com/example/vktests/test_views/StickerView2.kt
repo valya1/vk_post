@@ -1,12 +1,13 @@
 package com.example.vktests.test_views
 
 import android.content.Context
+import android.graphics.Matrix
 import android.util.AttributeSet
 import android.view.MotionEvent
-import android.view.animation.LinearInterpolator
-import android.widget.FrameLayout
 import androidx.appcompat.widget.AppCompatImageView
 import kotlin.math.atan2
+import kotlin.math.sqrt
+
 
 class StickerView2 : AppCompatImageView {
 
@@ -17,23 +18,21 @@ class StickerView2 : AppCompatImageView {
     var _x = 0f
     var _y = 0f
 
-    lateinit var lp: FrameLayout.LayoutParams
-
     var oldDist = .0f
-    var d = .0f
+    var mPrevRotation = .0f
 
-    var newRot = .0f
-    var angle = .0f
+    var mAngle = .0f
 
     var scaleDiff = .0f
+
+    val mapToScreenMatrix = Matrix()
 
 
     constructor(context: Context) : super(context)
     constructor(context: Context, attrs: AttributeSet) : super(context, attrs)
     constructor(context: Context, attrs: AttributeSet, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
-
-    companion object {```
+    companion object {
         const val MODE_NONE = 0
         const val MODE_DRAG = 1
         const val MODE_ZOOM = 2
@@ -41,22 +40,28 @@ class StickerView2 : AppCompatImageView {
 
     init {
         setOnTouchListener { v, event ->
-            lp = layoutParams as FrameLayout.LayoutParams
 
             when (event.action and MotionEvent.ACTION_MASK) {
 
                 MotionEvent.ACTION_DOWN -> {
                     mode = MODE_DRAG
-                    dx = event.rawX - lp.leftMargin
-                    dy = event.rawY - lp.topMargin
+//                    if (dx == 0f)
+                        dx = event.rawX
+//                    if (dy == 0f)
+                        dy = event.rawY
                 }
 
                 MotionEvent.ACTION_POINTER_DOWN -> {
+
                     oldDist = getSpacingBetweenPointers(event)
                     if (oldDist > 10f) {
                         mode = MODE_ZOOM
                     }
-                    d = getRotation(event)
+
+                    mPrevRotation = getRotation(
+                        event.getX(0), event.getY(0),
+                        event.getX(1), event.getY(1)
+                    )
                 }
 
                 MotionEvent.ACTION_POINTER_UP -> mode = MODE_NONE
@@ -66,17 +71,35 @@ class StickerView2 : AppCompatImageView {
                         _x = event.rawX
                         _y = event.rawY
 
-                        layoutParams = with(lp) {
-                            leftMargin = (_x - dx).toInt()
-                            topMargin = (_y - dy).toInt()
-                            this
-                        }
+//                        println("x-dx: ${_x-dx}" )
+//                        println("y-dx: ${_x-dx}" )
+
+                        v.x = _x - dx
+                        v.y = _y - dy
+//                        dx = v.x
+//                        dy = v.y
+
                     } else if (mode == MODE_ZOOM && event.pointerCount == 2) {
-                        newRot = getRotation(event)
-                        val r = newRot - d // todo определить смысл переменных
-                        angle = r
-                        _x = event.rawX
-                        _y = event.rawY
+
+                        mapToScreenMatrix.run {
+                            setRotate(rotation)
+                            postTranslate(v.x, v.y)
+                        }
+
+                        val viewToScreenCoords1 = floatArrayOf(event.getX(0), event.getY(0))
+                        val viewToScreenCoords2 = floatArrayOf(event.getX(1), event.getY(1))
+
+                        mapToScreenMatrix.mapPoints(viewToScreenCoords1)
+                        mapToScreenMatrix.mapPoints(viewToScreenCoords2)
+
+
+                        mAngle = getRotation(
+                            viewToScreenCoords1[0], viewToScreenCoords1[1],
+                            viewToScreenCoords2[0], viewToScreenCoords2[1]
+                        ) - mPrevRotation
+
+
+                        rotation = -mAngle
 
                         val newDist = getSpacingBetweenPointers(event)
                         if (newDist > 10f) {
@@ -88,20 +111,11 @@ class StickerView2 : AppCompatImageView {
                             }
                         }
 
-                        animate()
-                            .rotationBy(angle)
-                            .setDuration(6)
-                            .setInterpolator(LinearInterpolator())
-                            .start()
-
                         _x = event.rawX
                         _y = event.rawY
 
-                        layoutParams = with(lp) {
-                            leftMargin = ((_x - dx) + scaleDiff).toInt()
-                            topMargin = ((_y - dy) + scaleDiff).toInt()
-                            this
-                        }
+                        v.x = ((_x - dx) + scaleDiff)
+                        v.y = ((_y - dy) + scaleDiff)
                     }
                 }
             }
@@ -112,13 +126,14 @@ class StickerView2 : AppCompatImageView {
     private fun getSpacingBetweenPointers(event: MotionEvent): Float {
         val x = event.getX(0) - event.getX(1)
         val y = event.getY(0) - event.getY(1)
-        return Math.sqrt((x * x + y * y).toDouble()).toFloat()
+        return sqrt((x * x + y * y).toDouble()).toFloat()
     }
 
+    private fun getRotation(x1: Float, y1: Float, x2: Float, y2: Float): Float {
 
-    private fun getRotation(event: MotionEvent): Float {
-        val deltaX = (event.getX(0) - event.getX(1))
-        val deltaY = (event.getY(0) - event.getY(1))
+        val deltaX = (x1 - x2)
+        val deltaY = (y1 - y2)
+
         val rads = atan2(deltaX, deltaY)
         return Math.toDegrees(rads.toDouble()).toFloat()
     }

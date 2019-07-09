@@ -10,7 +10,7 @@
     </item>
 
     <item android:drawable="@drawable/bg_beach_center"
-          android:gravity="fill">
+          >
     </item>
 
     <item android:gravity="top"
