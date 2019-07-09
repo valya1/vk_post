@@ -54,10 +54,10 @@
         <ImageView
                 android:id="@+id/bgImage"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:layout_centerInParent="true"
                 android:adjustViewBounds="true"
-                android:scaleType="fitCenter"
+                android:scaleType="centerCrop"
                 android:src="@drawable/beach"/>
 
 
@@ -74,18 +74,20 @@
                 tools:text=""/>
 
         <ImageSwitcher
+                android:id="@+id/trashSwitcher"
                 android:layout_alignBottom="@id/bgImage"
                 android:layout_centerHorizontal="true"
-                android:layout_width="wrap_content"
-                android:layout_marginBottom="30dp"
+                android:layout_width="50dp"
+                android:visibility="invisible"
+                android:layout_marginBottom="50dp"
                 android:layout_height="wrap_content">
 
-            <ImageView android:layout_width="wrap_content"
-                       android:layout_height="wrap_content"
+            <ImageView android:layout_width="match_parent"
+                       android:layout_height="match_parent"
                        android:src="@drawable/ic_fab_trash"/>
 
-            <ImageView android:layout_width="wrap_content"
-                       android:layout_height="wrap_content"
+            <ImageView android:layout_width="match_parent"
+                       android:layout_height="match_parent"
                        android:background="@drawable/white_circle"
                        android:src="@drawable/ic_fab_trash_released"/>
 

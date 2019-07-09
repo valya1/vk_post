@@ -3,14 +3,10 @@ package com.example.vktests
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.os.Handler
-import android.text.SpannableString
-import android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
-import android.view.MotionEvent
+import android.view.View.VISIBLE
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
-import android.widget.ImageView
 import android.widget.LinearLayout
-import android.widget.RelativeLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -18,23 +14,13 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
-import com.bumptech.glide.request.target.CustomViewTarget
 import com.bumptech.glide.request.target.Target
-import com.bumptech.glide.request.target.ViewTarget
 import kotlinx.android.synthetic.main.activity_root.*
-import android.text.method.Touch.onTouchEvent
-import com.example.vktests.touch_listeners.MoveListener
-import com.almeros.android.multitouch.MoveGestureDetector
-import com.example.vktests.touch_listeners.RotateListener
-import com.almeros.android.multitouch.RotateGestureDetector
-import com.example.vktests.touch_listeners.ScaleListener
-import android.view.ScaleGestureDetector
-import android.opengl.ETC1.getWidth
-import android.opengl.ETC1.getHeight
 import com.example.vktests.test_views.StickerView2
+import java.lang.Math.abs
 
 
-class RootActivity : AppCompatActivity(), StickerListDialogFragment.Listener {
+class RootActivity : AppCompatActivity(), StickerListDialogFragment.Listener, StickerView2.OnMoveListener {
 
     private var backgoundPreviewsAdapter: BackgroundPreviewsAdapter? = null
     private val uiHandler = Handler()
@@ -42,6 +28,7 @@ class RootActivity : AppCompatActivity(), StickerListDialogFragment.Listener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_root)
+
 
         val testDrawable = ContextCompat.getDrawable(this, R.drawable.white_rect_semitransparent)
 
@@ -102,6 +89,40 @@ class RootActivity : AppCompatActivity(), StickerListDialogFragment.Listener {
         addStickerOnScreen("file:///android_asset/Stickers/${position + 1}.png")
     }
 
+    override fun onMove(sticker: StickerView2, dx: Float, dy: Float) {
+        println("movingSticker, stickerCenterX: ${dx + sticker.width / 2}, stickerCenterY: ${dy + sticker.height / 2}")
+
+        val stickerCenterX = sticker.x + sticker.width / 2
+        val stickerCenterY = sticker.y + sticker.height / 2
+        val trashCenterX = trashSwitcher.x + trashSwitcher.width / 2
+        val trashCenterY = trashSwitcher.y + trashSwitcher.height / 2
+
+
+        if (dy > 10f && stickerCenterY < trashCenterY) {
+            trashSwitcher
+                .apply {
+                    scaleX = 0f
+                    scaleY = 0f
+                    visibility = VISIBLE
+                }
+                .animate()
+                .scaleX(1.0f)
+                .scaleY(1.0f)
+                .setDuration(50)
+                .start()
+        } else {
+            trashSwitcher
+                .animate()
+                .scaleX(0.0f)
+                .scaleY(0.0f)
+                .setDuration(50)
+                .start()
+        }
+
+//        val trashLocation = intArrayOf(0, 0)
+//        trashSwitcher.getLocationOnScreen(trashLocation)
+    }
+
 
     fun addStickerOnScreen(src: String) {
 
@@ -109,7 +130,9 @@ class RootActivity : AppCompatActivity(), StickerListDialogFragment.Listener {
             .apply {
                 scaleX = 0.0f
                 scaleY = 0.0f
+                tag = src
                 layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams(WRAP_CONTENT, WRAP_CONTENT))
+                onMoveListener = this@RootActivity
             }
 
         Glide.with(sticker)

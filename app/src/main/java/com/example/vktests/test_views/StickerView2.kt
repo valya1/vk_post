@@ -13,20 +13,21 @@ class StickerView2 : AppCompatImageView {
 
     var mode: Int = MODE_NONE
 
-    var dx = 0f
-    var dy = 0f
-    var _x = 0f
-    var _y = 0f
-
+    var prevX = 0f
+    var prevY = 0f
     var oldDist = .0f
     var mPrevRotation = .0f
-
     var mAngle = .0f
-
     var scaleDiff = .0f
+
 
     val mapToScreenMatrix = Matrix()
 
+    var onMoveListener: OnMoveListener? = null
+
+    interface OnMoveListener {
+        fun onMove(sticker: StickerView2, dx: Float, dy: Float)
+    }
 
     constructor(context: Context) : super(context)
     constructor(context: Context, attrs: AttributeSet) : super(context, attrs)
@@ -45,10 +46,8 @@ class StickerView2 : AppCompatImageView {
 
                 MotionEvent.ACTION_DOWN -> {
                     mode = MODE_DRAG
-//                    if (dx == 0f)
-                        dx = event.rawX
-//                    if (dy == 0f)
-                        dy = event.rawY
+                    prevX = event.rawX
+                    prevY = event.rawY
                 }
 
                 MotionEvent.ACTION_POINTER_DOWN -> {
@@ -64,20 +63,19 @@ class StickerView2 : AppCompatImageView {
                     )
                 }
 
-                MotionEvent.ACTION_POINTER_UP -> mode = MODE_NONE
+                MotionEvent.ACTION_POINTER_UP, MotionEvent.ACTION_UP -> mode = MODE_NONE
 
                 MotionEvent.ACTION_MOVE -> {
                     if (mode == MODE_DRAG) {
-                        _x = event.rawX
-                        _y = event.rawY
 
-//                        println("x-dx: ${_x-dx}" )
-//                        println("y-dx: ${_x-dx}" )
+                        val dx = event.rawX - prevX
+                        val dy = event.rawY - prevY
 
-                        v.x = _x - dx
-                        v.y = _y - dy
-//                        dx = v.x
-//                        dy = v.y
+                        v.x += dx
+                        v.y += dy
+                        prevX = event.rawX
+                        prevY = event.rawY
+                        onMoveListener?.onMove(this, dx, dy)
 
                     } else if (mode == MODE_ZOOM && event.pointerCount == 2) {
 
@@ -97,8 +95,7 @@ class StickerView2 : AppCompatImageView {
                             viewToScreenCoords1[0], viewToScreenCoords1[1],
                             viewToScreenCoords2[0], viewToScreenCoords2[1]
                         ) - mPrevRotation
-
-
+                        
                         rotation = -mAngle
 
                         val newDist = getSpacingBetweenPointers(event)
@@ -111,17 +108,17 @@ class StickerView2 : AppCompatImageView {
                             }
                         }
 
-                        _x = event.rawX
-                        _y = event.rawY
-
-                        v.x = ((_x - dx) + scaleDiff)
-                        v.y = ((_y - dy) + scaleDiff)
+                        v.x += ((event.rawX - prevX) + scaleDiff)
+                        v.y += ((event.rawY - prevY) + scaleDiff)
+                        prevX = event.rawX
+                        prevY = event.rawY
                     }
                 }
             }
             true
         }
     }
+
 
     private fun getSpacingBetweenPointers(event: MotionEvent): Float {
         val x = event.getX(0) - event.getX(1)
