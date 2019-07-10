@@ -3,7 +3,6 @@ package com.example.vktests
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.os.Handler
-import android.util.Log
 import android.view.View
 import android.view.View.VISIBLE
 import android.view.ViewGroup
@@ -19,16 +18,20 @@ import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
 import com.example.vktests.test_views.StickerView
-import com.example.vktests.test_views.StickerView2
 import kotlinx.android.synthetic.main.activity_root.*
 
 
-class RootActivity : AppCompatActivity(), StickerListDialogFragment.Listener, StickerView2.OnMoveListener {
+class RootActivity : AppCompatActivity(), StickerListDialogFragment.Listener, StickerView.OnMoveListener {
 
-    private var backgoundPreviewsAdapter: BackgroundPreviewsAdapter? = null
-    private val uiHandler = Handler()
+    private var mBackgroundPreviewsAdapter: BackgroundPreviewsAdapter? = null
+    private val mUiHandler = Handler()
+    private val mRunnable = mutableMapOf<String, Runnable>()
 
-    private var isTrashAnimatingOrVisible = false
+    private var mIsTrashAppearingOrVisible = false
+
+    companion object {
+        const val TRASH_DISMISS = "trash_dismiss"
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,19 +39,19 @@ class RootActivity : AppCompatActivity(), StickerListDialogFragment.Listener, St
 
         val testDrawable = ContextCompat.getDrawable(this, R.drawable.white_rect_semitransparent)
 
-        backgoundPreviewsAdapter = BackgroundPreviewsAdapter { clickedPosition ->
+        mBackgroundPreviewsAdapter = BackgroundPreviewsAdapter { clickedPosition ->
 
             rvBackroundPreviews?.scrollToPosition(clickedPosition)
-            backgoundPreviewsAdapter?.setSelectedBackgroundPreview(clickedPosition)
-            backgoundPreviewsAdapter?.getBackgroundRes(clickedPosition)?.let { backgroundRes ->
+            mBackgroundPreviewsAdapter?.setSelectedBackgroundPreview(clickedPosition)
+            mBackgroundPreviewsAdapter?.getBackgroundRes(clickedPosition)?.let { backgroundRes ->
                 bgImage.setImageDrawable(ContextCompat.getDrawable(this, backgroundRes))
             }
         }
 
         rvBackroundPreviews.layoutManager = LinearLayoutManager(this, LinearLayout.HORIZONTAL, false)
-        rvBackroundPreviews.adapter = backgoundPreviewsAdapter
+        rvBackroundPreviews.adapter = mBackgroundPreviewsAdapter
 
-        backgoundPreviewsAdapter?.setBackgroundColors(
+        mBackgroundPreviewsAdapter?.setBackgroundColors(
             listOf(
                 R.drawable.blue, R.drawable.green, R.drawable.yellow_orange,
                 R.drawable.purple, R.drawable.beach, R.drawable.stars
@@ -77,58 +80,39 @@ class RootActivity : AppCompatActivity(), StickerListDialogFragment.Listener, St
         addStickerOnScreen("file:///android_asset/Stickers/${position + 1}.png")
     }
 
-    private val trashDismissRunnable = Runnable {
-        trashSwitcher.animate()
-            .scaleX(0.0f)
-            .scaleY(0.0f)
-            .setDuration(100)
-            .withEndAction { trashSwitcher.visibility = View.INVISIBLE }
-            .start()
-        isTrashAnimatingOrVisible = false
-    }
-
-    private val dismissRunnables = mutableMapOf<String, Runnable>()
-
-    override fun onMove(sticker: StickerView2, dx: Float, dy: Float) {
+    override fun onMove(sticker: StickerView, dx: Float, dy: Float) {
 
         val parentHeight = (trashSwitcher.parent as View).height
-
         val stickerCenterX = sticker.x + sticker.width / 2
         val stickerCenterY = sticker.y + sticker.height / 2
-        val trashCenterX = trashSwitcher.x + trashSwitcher.width / 2
         val trashCenterY = trashSwitcher.y + trashSwitcher.height / 2
 
         if (dy > 5f && stickerCenterY < trashCenterY && trashCenterY - stickerCenterY <= parentHeight * 0.4) {
-            uiHandler.removeCallbacks(trashDismissRunnable)
-            if (!isTrashAnimatingOrVisible) {
-                trashSwitcher
-                    .apply {
-                        visibility = VISIBLE
-                        scaleX = 0f
-                        scaleY = 0f
-                    }
-                    .animate()
-                    .withStartAction {
-                        isTrashAnimatingOrVisible = true
-                    }
-                    .scaleX(1.0f)
-                    .scaleY(1.0f)
-                    .setDuration(100)
-                    .start()
+            trashSwitcher.cancelUniqueDelayedAction(tag = TRASH_DISMISS)
+
+            if (!mIsTrashAppearingOrVisible) {
+                trashSwitcher.showWithScaleAnimation(startAction = { mIsTrashAppearingOrVisible = true })
             }
         } else {
-            uiHandler.postDelayed(trashDismissRunnable, 1000)
+            trashSwitcher.scheduleUniqueDelayedAction(tag = TRASH_DISMISS) {
+                hideWithScaleAnimation(
+                    endAction = { mIsTrashAppearingOrVisible = false },
+                    finishVisibility = View.INVISIBLE
+                )
+            }
         }
 
         if (trashSwitcher.isVisible) {
             with(trashSwitcher) {
                 if (stickerCenterX in x..(x + width) && stickerCenterY in y..(y + width)) {
                     trashSwitcher.displayedChild = 1
-                    sticker.scheduleDelayedDismiss()
+                    sticker.scheduleUniqueDelayedAction(delay = 700) {
+                        animateAlphaDismissWithCallback { containerContent.removeView(this) }
+                    }
 
                 } else {
                     trashSwitcher.displayedChild = 0
-                    sticker.cancelDelayedDismiss()
+                    sticker.cancelUniqueDelayedAction()
                 }
             }
         }
@@ -136,10 +120,8 @@ class RootActivity : AppCompatActivity(), StickerListDialogFragment.Listener, St
 
     fun addStickerOnScreen(src: String) {
 
-        val sticker = StickerView2(this)
+        val sticker = StickerView(this)
             .apply {
-                scaleX = 0.0f
-                scaleY = 0.0f
                 tag = src
                 layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams(WRAP_CONTENT, WRAP_CONTENT))
                 onMoveListener = this@RootActivity
@@ -157,14 +139,10 @@ class RootActivity : AppCompatActivity(), StickerListDialogFragment.Listener, St
                     isFirstResource: Boolean
                 ): Boolean {
                     with(sticker) {
-                        uiHandler.post {
+                        mUiHandler.post {
                             setImageDrawable(resource)
                             containerContent.addView(this, 1)
-                            animate()
-                                .scaleX(1.0f)
-                                .scaleY(1.0f)
-                                .setDuration(100)
-                                .start()
+                            showWithScaleAnimation()
                         }
                     }
                     return false
@@ -174,33 +152,67 @@ class RootActivity : AppCompatActivity(), StickerListDialogFragment.Listener, St
     }
 
 
-    fun StickerView2.animateDismissWithCallback(onAnimationCompleteBlock: StickerView2.() -> Unit) {
-        this.animate()
+    fun View.animateAlphaDismissWithCallback(duration: Long = 100, onAnimationCompleteBlock: View.() -> Unit) =
+        animate()
             .alpha(0.0f)
-            .setDuration(100)
+            .setDuration(duration)
             .withEndAction { onAnimationCompleteBlock() }
+            .start()
+
+    fun View.showWithScaleAnimation(
+        duration: Long = 100, startAction: (() -> Unit)? = null, endAction: (() -> Unit)? = null
+    ) {
+        scaleX = 0f
+        scaleY = 0f
+        animate()
+            .withStartAction {
+                visibility = VISIBLE
+                startAction?.invoke()
+            }
+            .withEndAction {
+                endAction?.invoke()
+            }
+            .scaleX(1.0f)
+            .scaleY(1.0f)
+            .setDuration(duration)
             .start()
     }
 
-    fun StickerView2.scheduleDelayedDismiss() {
 
+    fun View.hideWithScaleAnimation(
+        duration: Long = 100,
+        finishVisibility: Int = View.GONE,
+        startAction: (() -> Unit)? = null,
+        endAction: (() -> Unit)? = null
+    ) = animate()
+        .withStartAction {
+            visibility = VISIBLE
+            startAction?.invoke()
+        }
+        .withEndAction {
+            visibility = finishVisibility
+            endAction?.invoke()
+        }
+        .scaleX(0.0f)
+        .scaleY(0.0f)
+        .setDuration(duration)
+        .start()
+
+
+    fun View.scheduleUniqueDelayedAction(
+        tag: String = this.tag as String, delay: Long = 1000, action: View.() -> Unit
+    ) {
         (tag as? String)?.run {
-            if (!dismissRunnables.containsKey(this)) {
-                dismissRunnables[this] = Runnable {
-                    this@scheduleDelayedDismiss.animateDismissWithCallback(containerContent::removeView)
-                }.also {
-                    uiHandler.postDelayed(it, 1000)
-                }
+            if (!mRunnable.containsKey(tag)) {
+                mRunnable[tag] = Runnable { action() }.also { handler.postDelayed(it, delay) }
             }
         }
     }
 
-    fun StickerView2.cancelDelayedDismiss() {
-        (tag as? String)?.run {
-            if (dismissRunnables.containsKey(this)) {
-                dismissRunnables[this]?.run(uiHandler::removeCallbacks)
-                dismissRunnables.remove(this)
-            }
+    fun View.cancelUniqueDelayedAction(tag: String = this.tag as String) {
+        if (mRunnable.containsKey(tag)) {
+            mRunnable[tag]?.run(handler::removeCallbacks)
+            mRunnable.remove(tag)
         }
     }
 }

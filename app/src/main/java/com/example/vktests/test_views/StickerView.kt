@@ -1,68 +1,137 @@
 package com.example.vktests.test_views
 
 import android.content.Context
-import android.graphics.Canvas
+import android.graphics.Matrix
 import android.util.AttributeSet
-import android.util.Log
-import android.view.ScaleGestureDetector
-import android.widget.FrameLayout
-import android.widget.ImageView
-import com.almeros.android.multitouch.MoveGestureDetector
-import com.almeros.android.multitouch.RotateGestureDetector
-import com.example.vktests.touch_listeners.MoveListener
-import com.example.vktests.touch_listeners.RotateListener
-import com.example.vktests.touch_listeners.ScaleListener
-
-class StickerView : ImageView {
+import android.view.MotionEvent
+import androidx.appcompat.widget.AppCompatImageView
+import kotlin.math.atan2
+import kotlin.math.sqrt
 
 
-    private val mRotateListener = RotateListener()
-    private val mMoveListener = MoveListener()
-    private val mScaleListener = ScaleListener()
+class StickerView : AppCompatImageView {
 
-    val mScaleDetector: ScaleGestureDetector = ScaleGestureDetector(context, mScaleListener)
-    val mMoveDetector: MoveGestureDetector = MoveGestureDetector(context, mMoveListener)
-    val mRotateDetector: RotateGestureDetector = RotateGestureDetector(context, mRotateListener)
+    var mode: Int = MODE_NONE
 
-    constructor(context: Context) : super(context)
-    constructor(context: Context, attrs: AttributeSet) : super(context, attrs)
-    constructor(context: Context, attrs: AttributeSet, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
+    var prevX = 0f
+    var prevY = 0f
+    var oldDist = .0f
+    var mPrevRotation = .0f
+    var mAngle = .0f
+    var scaleDiff = .0f
 
-    init {
 
-        scaleType = ScaleType.MATRIX
+    val mapToScreenMatrix = Matrix()
 
-        setOnTouchListener { v, event ->
+    var onMoveListener: OnMoveListener? = null
 
-            mScaleDetector.onTouchEvent(event)
-//            mScaleDetector.isQuickScaleEnabled
-            mMoveDetector.onTouchEvent(event)
-//            mRotateDetector.onTouchEvent(event)
+    interface OnMoveListener {
+        fun onMove(sticker: StickerView, dx: Float, dy: Float)
+    }
 
-            layoutParams = with(layoutParams as FrameLayout.LayoutParams) {
+        constructor(context: Context) : super(context)
+        constructor(context: Context, attrs: AttributeSet) : super(context, attrs)
+        constructor(context: Context, attrs: AttributeSet, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
-                val stickerHeight = v.height
-                val stickerWidth = v.width
-                val scaleFactor = mScaleDetector.scaleFactor
+        companion object {
+            const val MODE_NONE = 0
+            const val MODE_DRAG = 1
+            const val MODE_ZOOM = 2
+        }
 
-                val scaleCenterY = (stickerHeight * scaleFactor) / 2
-                val scaleCenterX = (stickerWidth * scaleFactor) / 2
+        init {
+            setOnTouchListener { v, event ->
 
-//                marginStart = (mMoveListener.focusX).toInt()
-//                topMargin = (mMoveListener.focusY).toInt()
-                this
+                when (event.action and MotionEvent.ACTION_MASK) {
+
+                    MotionEvent.ACTION_DOWN -> {
+                        mode = MODE_DRAG
+                        prevX = event.rawX
+                        prevY = event.rawY
+                    }
+
+                    MotionEvent.ACTION_POINTER_DOWN -> {
+
+                        oldDist = getSpacingBetweenPointers(event)
+                        if (oldDist > 10f) {
+                            mode = MODE_ZOOM
+                        }
+
+                        mPrevRotation = getRotation(
+                            event.getX(0), event.getY(0),
+                            event.getX(1), event.getY(1)
+                        )
+                    }
+
+                    MotionEvent.ACTION_POINTER_UP, MotionEvent.ACTION_UP -> mode = MODE_NONE
+
+                    MotionEvent.ACTION_MOVE -> {
+                        if (mode == MODE_DRAG) {
+
+                            val dx = event.rawX - prevX
+                            val dy = event.rawY - prevY
+
+                            v.x += dx
+                            v.y += dy
+                            prevX = event.rawX
+                            prevY = event.rawY
+                            onMoveListener?.onMove(this, dx, dy)
+
+                        } else if (mode == MODE_ZOOM && event.pointerCount == 2) {
+
+                            mapToScreenMatrix.run {
+                                setRotate(rotation)
+                                postTranslate(v.x, v.y)
+                            }
+
+                            val viewToScreenCoords1 = floatArrayOf(event.getX(0), event.getY(0))
+                            val viewToScreenCoords2 = floatArrayOf(event.getX(1), event.getY(1))
+
+                            mapToScreenMatrix.mapPoints(viewToScreenCoords1)
+                            mapToScreenMatrix.mapPoints(viewToScreenCoords2)
+
+
+                            mAngle = getRotation(
+                                viewToScreenCoords1[0], viewToScreenCoords1[1],
+                                viewToScreenCoords2[0], viewToScreenCoords2[1]
+                            ) - mPrevRotation
+
+                            rotation = -mAngle
+
+                            val newDist = getSpacingBetweenPointers(event)
+                            if (newDist > 10f) {
+                                val scale = newDist / oldDist * scaleX
+                                if (scale > 0.6) {
+                                    scaleDiff = scale
+                                    scaleX = scale
+                                    scaleY = scale
+                                }
+                            }
+
+                            v.x += ((event.rawX - prevX) + scaleDiff)
+                            v.y += ((event.rawY - prevY) + scaleDiff)
+                            prevX = event.rawX
+                            prevY = event.rawY
+                        }
+                    }
+                }
+                true
             }
+        }
 
-            scaleX = mScaleListener.scaleFactor
-            scaleY = mScaleListener.scaleFactor
 
-//            imageMatrix = with(matrix) {
-//                val scaleFactor = mScaleDetector.scaleFactor
-//                postScale(scaleFactor, scaleFactor)
-//                postRotate(mRotateDetector.rotationDegreesDelta)
-//                this
-//            }
-            true
+        private fun getSpacingBetweenPointers(event: MotionEvent): Float {
+            val x = event.getX(0) - event.getX(1)
+            val y = event.getY(0) - event.getY(1)
+            return sqrt((x * x + y * y).toDouble()).toFloat()
+        }
+
+        private fun getRotation(x1: Float, y1: Float, x2: Float, y2: Float): Float {
+
+            val deltaX = (x1 - x2)
+            val deltaY = (y1 - y2)
+
+            val rads = atan2(deltaX, deltaY)
+            return Math.toDegrees(rads.toDouble()).toFloat()
         }
     }
-}
