@@ -26,7 +26,7 @@ class StickerView2 : AppCompatImageView {
     var onMoveListener: OnMoveListener? = null
 
     interface OnMoveListener {
-        fun onMove(sticker: StickerView2, dx: Float, dy: Float, pointerX: Float, pointerY: Float)
+        fun onMove(sticker: StickerView2, dx: Float, dy: Float)
     }
 
         constructor(context: Context) : super(context)
@@ -75,7 +75,7 @@ class StickerView2 : AppCompatImageView {
                             v.y += dy
                             prevX = event.rawX
                             prevY = event.rawY
-                            onMoveListener?.onMove(this, dx, dy, event.x, event.y)
+                            onMoveListener?.onMove(this, dx, dy)
 
                         } else if (mode == MODE_ZOOM && event.pointerCount == 2) {
 

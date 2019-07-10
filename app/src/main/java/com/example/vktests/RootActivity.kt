@@ -3,6 +3,7 @@ package com.example.vktests
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.os.Handler
+import android.util.Log
 import android.view.View
 import android.view.View.VISIBLE
 import android.view.ViewGroup
@@ -10,12 +11,14 @@ import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
+import com.example.vktests.test_views.StickerView
 import com.example.vktests.test_views.StickerView2
 import kotlinx.android.synthetic.main.activity_root.*
 
@@ -25,27 +28,13 @@ class RootActivity : AppCompatActivity(), StickerListDialogFragment.Listener, St
     private var backgoundPreviewsAdapter: BackgroundPreviewsAdapter? = null
     private val uiHandler = Handler()
 
+    private var isTrashAnimatingOrVisible = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_root)
 
-
         val testDrawable = ContextCompat.getDrawable(this, R.drawable.white_rect_semitransparent)
-
-//        postText.addTextChangedListener(object: TextWatcher{
-//            override fun afterTextChanged(s: Editable?) {
-//                TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-//            }
-//
-//            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
-//                TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-//            }
-//
-//            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-//                TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-//            }
-//
-//        })
 
         backgoundPreviewsAdapter = BackgroundPreviewsAdapter { clickedPosition ->
 
@@ -84,20 +73,23 @@ class RootActivity : AppCompatActivity(), StickerListDialogFragment.Listener, St
         }
     }
 
-
     override fun onStickerClicked(position: Int) {
         addStickerOnScreen("file:///android_asset/Stickers/${position + 1}.png")
     }
 
-
     private val trashDismissRunnable = Runnable {
-        trashSwitcher.visibility = View.GONE
+        trashSwitcher.animate()
+            .scaleX(0.0f)
+            .scaleY(0.0f)
+            .setDuration(100)
+            .withEndAction { trashSwitcher.visibility = View.INVISIBLE }
+            .start()
         isTrashAnimatingOrVisible = false
     }
 
-    private var isTrashAnimatingOrVisible = false
+    private val dismissRunnables = mutableMapOf<String, Runnable>()
 
-    override fun onMove(sticker: StickerView2, dx: Float, dy: Float, pointerX: Float, pointerY: Float) {
+    override fun onMove(sticker: StickerView2, dx: Float, dy: Float) {
 
         val parentHeight = (trashSwitcher.parent as View).height
 
@@ -106,7 +98,7 @@ class RootActivity : AppCompatActivity(), StickerListDialogFragment.Listener, St
         val trashCenterX = trashSwitcher.x + trashSwitcher.width / 2
         val trashCenterY = trashSwitcher.y + trashSwitcher.height / 2
 
-        if (dy > 0 && stickerCenterY < trashCenterY && trashCenterY - stickerCenterY <= parentHeight * 0.4) {
+        if (dy > 5f && stickerCenterY < trashCenterY && trashCenterY - stickerCenterY <= parentHeight * 0.4) {
             uiHandler.removeCallbacks(trashDismissRunnable)
             if (!isTrashAnimatingOrVisible) {
                 trashSwitcher
@@ -125,20 +117,22 @@ class RootActivity : AppCompatActivity(), StickerListDialogFragment.Listener, St
                     .start()
             }
         } else {
-            uiHandler.postDelayed(trashDismissRunnable, 2000)
+            uiHandler.postDelayed(trashDismissRunnable, 1000)
         }
 
+        if (trashSwitcher.isVisible) {
+            with(trashSwitcher) {
+                if (stickerCenterX in x..(x + width) && stickerCenterY in y..(y + width)) {
+                    trashSwitcher.displayedChild = 1
+                    sticker.scheduleDelayedDismiss()
 
-        with(trashSwitcher) {
-
-            if (stickerCenterX in x..(x + width) && stickerCenterY in y..(y + width)) {
-                trashSwitcher.displayedChild = 1
-            } else {
-                trashSwitcher.displayedChild = 0
+                } else {
+                    trashSwitcher.displayedChild = 0
+                    sticker.cancelDelayedDismiss()
+                }
             }
         }
     }
-
 
     fun addStickerOnScreen(src: String) {
 
@@ -177,5 +171,36 @@ class RootActivity : AppCompatActivity(), StickerListDialogFragment.Listener, St
                 }
             })
             .submit()
+    }
+
+
+    fun StickerView2.animateDismissWithCallback(onAnimationCompleteBlock: StickerView2.() -> Unit) {
+        this.animate()
+            .alpha(0.0f)
+            .setDuration(100)
+            .withEndAction { onAnimationCompleteBlock() }
+            .start()
+    }
+
+    fun StickerView2.scheduleDelayedDismiss() {
+
+        (tag as? String)?.run {
+            if (!dismissRunnables.containsKey(this)) {
+                dismissRunnables[this] = Runnable {
+                    this@scheduleDelayedDismiss.animateDismissWithCallback(containerContent::removeView)
+                }.also {
+                    uiHandler.postDelayed(it, 1000)
+                }
+            }
+        }
+    }
+
+    fun StickerView2.cancelDelayedDismiss() {
+        (tag as? String)?.run {
+            if (dismissRunnables.containsKey(this)) {
+                dismissRunnables[this]?.run(uiHandler::removeCallbacks)
+                dismissRunnables.remove(this)
+            }
+        }
     }
 }
