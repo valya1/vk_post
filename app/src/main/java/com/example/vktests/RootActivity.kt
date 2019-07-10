@@ -89,8 +89,7 @@ class RootActivity : AppCompatActivity(), StickerListDialogFragment.Listener, St
         addStickerOnScreen("file:///android_asset/Stickers/${position + 1}.png")
     }
 
-    override fun onMove(sticker: StickerView2, dx: Float, dy: Float) {
-        println("movingSticker, stickerCenterX: ${dx + sticker.width / 2}, stickerCenterY: ${dy + sticker.height / 2}")
+    override fun onMove(sticker: StickerView2, dx: Float, dy: Float, pointerX: Float, pointerY: Float) {
 
         val stickerCenterX = sticker.x + sticker.width / 2
         val stickerCenterY = sticker.y + sticker.height / 2
@@ -98,29 +97,28 @@ class RootActivity : AppCompatActivity(), StickerListDialogFragment.Listener, St
         val trashCenterY = trashSwitcher.y + trashSwitcher.height / 2
 
 
-        if (dy > 10f && stickerCenterY < trashCenterY) {
-            trashSwitcher
-                .apply {
-                    scaleX = 0f
-                    scaleY = 0f
-                    visibility = VISIBLE
-                }
-                .animate()
-                .scaleX(1.0f)
-                .scaleY(1.0f)
-                .setDuration(50)
-                .start()
-        } else {
-            trashSwitcher
-                .animate()
-                .scaleX(0.0f)
-                .scaleY(0.0f)
-                .setDuration(50)
-                .start()
-        }
+//        if (dy > 2 && stickerCenterY < trashCenterY) {
+//            trashSwitcher
+//                .apply {
+//                    scaleX = 0f
+//                    scaleY = 0f
+//                    visibility = VISIBLE
+//                }
+//                .animate()
+//                .scaleX(1.0f)
+//                .scaleY(1.0f)
+//                .setDuration(50)
+//                .start()
+//        }
+        with(trashSwitcher) {
 
-//        val trashLocation = intArrayOf(0, 0)
-//        trashSwitcher.getLocationOnScreen(trashLocation)
+            if (pointerX > x && pointerX < x + width && pointerY > y && pointerY < y + height) {
+                trashSwitcher.displayedChild = 1
+            } else {
+                trashSwitcher.displayedChild = 0
+            }
+
+        }
     }
 
 
