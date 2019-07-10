@@ -20,7 +20,6 @@ class StickerView : AppCompatImageView {
     var mAngle = .0f
     var scaleDiff = .0f
 
-
     val mapToScreenMatrix = Matrix()
 
     var onMoveListener: OnMoveListener? = null
