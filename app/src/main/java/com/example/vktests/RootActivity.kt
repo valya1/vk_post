@@ -3,6 +3,7 @@ package com.example.vktests
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.os.Handler
+import android.view.View
 import android.view.View.VISIBLE
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
@@ -15,9 +16,8 @@ import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
-import kotlinx.android.synthetic.main.activity_root.*
 import com.example.vktests.test_views.StickerView2
-import java.lang.Math.abs
+import kotlinx.android.synthetic.main.activity_root.*
 
 
 class RootActivity : AppCompatActivity(), StickerListDialogFragment.Listener, StickerView2.OnMoveListener {
@@ -89,38 +89,54 @@ class RootActivity : AppCompatActivity(), StickerListDialogFragment.Listener, St
         addStickerOnScreen("file:///android_asset/Stickers/${position + 1}.png")
     }
 
-    override fun onMove(sticker: StickerView2, dx: Float, dy: Float) {
-        println("movingSticker, stickerCenterX: ${dx + sticker.width / 2}, stickerCenterY: ${dy + sticker.height / 2}")
+
+    private val trashDismissRunnable = Runnable {
+        trashSwitcher.visibility = View.GONE
+        isTrashAnimatingOrVisible = false
+    }
+
+    private var isTrashAnimatingOrVisible = false
+
+    override fun onMove(sticker: StickerView2, dx: Float, dy: Float, pointerX: Float, pointerY: Float) {
+
+        val parentHeight = (trashSwitcher.parent as View).height
 
         val stickerCenterX = sticker.x + sticker.width / 2
         val stickerCenterY = sticker.y + sticker.height / 2
         val trashCenterX = trashSwitcher.x + trashSwitcher.width / 2
         val trashCenterY = trashSwitcher.y + trashSwitcher.height / 2
 
-
-        if (dy > 10f && stickerCenterY < trashCenterY) {
-            trashSwitcher
-                .apply {
-                    scaleX = 0f
-                    scaleY = 0f
-                    visibility = VISIBLE
-                }
-                .animate()
-                .scaleX(1.0f)
-                .scaleY(1.0f)
-                .setDuration(50)
-                .start()
+        if (dy > 0 && stickerCenterY < trashCenterY && trashCenterY - stickerCenterY <= parentHeight * 0.4) {
+            uiHandler.removeCallbacks(trashDismissRunnable)
+            if (!isTrashAnimatingOrVisible) {
+                trashSwitcher
+                    .apply {
+                        visibility = VISIBLE
+                        scaleX = 0f
+                        scaleY = 0f
+                    }
+                    .animate()
+                    .withStartAction {
+                        isTrashAnimatingOrVisible = true
+                    }
+                    .scaleX(1.0f)
+                    .scaleY(1.0f)
+                    .setDuration(100)
+                    .start()
+            }
         } else {
-            trashSwitcher
-                .animate()
-                .scaleX(0.0f)
-                .scaleY(0.0f)
-                .setDuration(50)
-                .start()
+            uiHandler.postDelayed(trashDismissRunnable, 2000)
         }
 
-//        val trashLocation = intArrayOf(0, 0)
-//        trashSwitcher.getLocationOnScreen(trashLocation)
+
+        with(trashSwitcher) {
+
+            if (stickerCenterX in x..(x + width) && stickerCenterY in y..(y + width)) {
+                trashSwitcher.displayedChild = 1
+            } else {
+                trashSwitcher.displayedChild = 0
+            }
+        }
     }
 
 
