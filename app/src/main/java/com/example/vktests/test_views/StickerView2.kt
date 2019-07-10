@@ -20,7 +20,6 @@ class StickerView2 : AppCompatImageView {
     var mAngle = .0f
     var scaleDiff = .0f
 
-
     val mapToScreenMatrix = Matrix()
 
     var onMoveListener: OnMoveListener? = null
@@ -95,7 +94,7 @@ class StickerView2 : AppCompatImageView {
                             viewToScreenCoords1[0], viewToScreenCoords1[1],
                             viewToScreenCoords2[0], viewToScreenCoords2[1]
                         ) - mPrevRotation
-                        
+
                         rotation = -mAngle
 
                         val newDist = getSpacingBetweenPointers(event)
