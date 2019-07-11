@@ -23,7 +23,7 @@ class CustomBackgroundEditText : AppCompatEditText {
     private var customBackgroundTextHelper: CustomBackgroundTextHelper? = null
 
     private var paint = Paint().apply {
-        color = ContextCompat.getColor(context,  R.color.blue_text_bg_semi_transparent)
+        color = ContextCompat.getColor(context, R.color.blue_text_bg_semi_transparent)
         xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC)
     }
 
@@ -31,7 +31,7 @@ class CustomBackgroundEditText : AppCompatEditText {
 
         if (customBackgroundTextHelper != null) {
             canvas.withTranslation(totalPaddingLeft.toFloat(), totalPaddingTop.toFloat()) {
-                customBackgroundTextHelper?.draw(canvas, paint, text as Spanned, layout)
+                customBackgroundTextHelper?.draw(canvas, context, paint, text as Spanned, layout)
             }
         }
 
@@ -41,7 +41,7 @@ class CustomBackgroundEditText : AppCompatEditText {
     fun setBackgroundTextDrawable(drawable: Drawable?) {
         if (drawable != null) {
             customBackgroundTextHelper = CustomBackgroundTextHelper(
-                horizontalPadding = 10,
+                horizontalPadding = paddingRight,
                 verticalPadding = 10,
                 backgroundDrawable = drawable
             )

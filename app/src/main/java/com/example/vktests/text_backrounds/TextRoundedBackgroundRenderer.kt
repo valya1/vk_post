@@ -1,9 +1,11 @@
 package com.example.vktests.text_backrounds
 
+import android.content.Context
 import android.graphics.*
 import android.graphics.drawable.Drawable
 import android.text.Layout
 import androidx.core.content.ContextCompat
+import com.example.vktests.R
 import kotlin.math.max
 import kotlin.math.min
 
@@ -31,7 +33,7 @@ internal abstract class TextRoundedBgRenderer(
 
         private val transparentPaint = Paint().apply {
             color = Color.TRANSPARENT
-            xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_OUT)
+            xfermode = PorterDuffXfermode(PorterDuff.Mode.SCREEN)
         }
 
         companion object {
@@ -43,34 +45,53 @@ internal abstract class TextRoundedBgRenderer(
         }
 
 
-        fun draw(canvas: Canvas, paint: Paint, layout: Layout, startLine: Int, endLine: Int) {
+        fun draw(
+            canvas: Canvas, context: Context, paint: Paint, layout: Layout, startLine: Int, endLine: Int,
+            startOffset: Int, endOffset: Int
+        ) {
 
             for (line in startLine..endLine) {
 
                 val lineTop = getLineTop(layout, line)
                 val lineBottom = getLineBottom(layout, line)
-                val lineLeft = layout.getLineLeft(line)
-                val lineRight = layout.getLineRight(line)
+                val lineLeft = max(layout.getLineLeft(line).toInt() - horizontalPadding, 0)
+                val lineRight = min(layout.getLineRight(line).toInt() + horizontalPadding, layout.width)
+//                val lineLeft = layout.getLineLeft(line)
+//                val lineRight = layout.getLineRight(line)
 
-                canvas.drawRoundRect(
-                    RectF(lineLeft.toFloat(), lineTop.toFloat(), lineRight.toFloat(), lineBottom.toFloat()),
-                    ROUNDED_CORNER_RX.toFloat(),
-                    ROUNDED_CORNER_RY.toFloat(),
-                    paint
+                backgroundDrawable.setBounds(
+                    max(layout.getLineLeft(line).toInt() - horizontalPadding, 0),
+                    lineTop,
+//                    lineTop + if (line in startLine + 1 until endLine) horizontalPadding else 0,
+                    min(layout.getLineRight(line).toInt() + horizontalPadding, layout.width),
+                    lineBottom - horizontalPadding
                 )
 
-                canvas.drawRect(
-                    RectF(
-                        lineLeft - CIRCLE_RADIUS,
-                        lineBottom.toFloat(),
-                        lineRight + CIRCLE_RADIUS,
-                        lineBottom + CIRCLE_RADIUS.toFloat()
-                    ),
-                    paint
-                )
+//                backgroundDrawable.setColorFilter(
+//                    ContextCompat.getColor(context, R.color.white_semitransparent),
+//                    PorterDuff.Mode.SCREEN
+//                )
+                backgroundDrawable.draw(canvas)
 
-                canvas.drawCircle(lineLeft, lineBottom.toFloat(), CIRCLE_RADIUS, transparentPaint)
-                canvas.drawCircle(lineRight, lineBottom.toFloat(), CIRCLE_RADIUS, transparentPaint)
+//                canvas.drawRoundRect(
+//                    RectF(lineLeft.toFloat(), lineTop.toFloat(), lineRight.toFloat(), lineBottom.toFloat()),
+//                    ROUNDED_CORNER_RX,
+//                    ROUNDED_CORNER_RY,
+//                    paint
+//                )
+//
+//                canvas.drawRect(
+//                    RectF(
+//                        lineLeft - CIRCLE_RADIUS,
+//                        lineBottom.toFloat(),
+//                        lineRight + CIRCLE_RADIUS,
+//                        lineBottom + CIRCLE_RADIUS
+//                    ),
+//                    paint
+//                )
+
+//                canvas.drawCircle(lineLeft.toFloat(), lineBottom.toFloat(), CIRCLE_RADIUS, paint)
+//                canvas.drawCircle(lineRight.toFloat(), lineBottom.toFloat(), CIRCLE_RADIUS, paint)
 
 //                backgroundDrawable.setBounds(
 //                    max(layout.getLineLeft(line).toInt() - horizontalPadding, 0),
@@ -81,9 +102,6 @@ internal abstract class TextRoundedBgRenderer(
 //                backgroundDrawable.draw(canvas)
 //                canvas.drawCircle()
             }
-
         }
-
     }
-
 }

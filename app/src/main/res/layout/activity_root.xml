@@ -76,19 +76,23 @@
                         android:layout_centerInParent="true"
                         android:textAlignment="center"
                         android:textSize="24sp"
-                        android:background="@null"
+                        android:paddingLeft="5dp"
+                        android:paddingRight="5dp"
+                        android:inputType="textAutoComplete|textMultiLine|textLongMessage"
+                        tools:text="Всем привет!!!!!!!!!!!!!!!!!!!!!"
+                        android:textStyle="bold"
                         android:hint="Что у вас нового?"
-                        android:textColor="@color/black"
-                        tools:text=""/>
+                        android:background="@null"
+                        android:textColor="@color/black"/>
 
                 <ImageSwitcher
                         android:id="@+id/trashSwitcher"
                         android:layout_alignBottom="@id/bgImage"
                         android:layout_centerHorizontal="true"
-                        android:layout_width="60dp"
+                        android:layout_width="50dp"
                         android:visibility="invisible"
                         android:layout_marginBottom="30dp"
-                        android:layout_height="60dp">
+                        android:layout_height="50dp">
 
                     <ImageView android:layout_width="match_parent"
                                android:layout_height="match_parent"

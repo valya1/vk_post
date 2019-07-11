@@ -1,5 +1,6 @@
 package com.example.vktests.text_backrounds
 
+import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.drawable.Drawable
@@ -19,7 +20,7 @@ class CustomBackgroundTextHelper(
         )
     }
 
-    fun draw(canvas: Canvas, paint: Paint, text: Spanned, layout: Layout) {
+    fun draw(canvas: Canvas, context: Context, paint: Paint, text: Spanned, layout: Layout) {
         // ideally the calculations here should be cached since they are not cheap. However, proper
         // invalidation of the cache is required whenever anything related to text has changed.
         val spanStart = 0
@@ -27,14 +28,13 @@ class CustomBackgroundTextHelper(
         val startLine = layout.getLineForOffset(spanStart)
         val endLine = layout.getLineForOffset(spanEnd)
 
-//        val startOffset = (layout.getPrimaryHorizontal(spanStart)
-//                + -1 * layout.getParagraphDirection(startLine) * horizontalPadding).toInt()
-//        val endOffset = (layout.getPrimaryHorizontal(spanEnd)
-//
-//                + layout.getParagraphDirection(endLine) * horizontalPadding).toInt()
+        val startOffset = (layout.getPrimaryHorizontal(spanStart) - horizontalPadding).toInt()
+
+        val endOffset = (layout.getPrimaryHorizontal(spanEnd)
+                + layout.getParagraphDirection(endLine) * horizontalPadding).toInt()
 
 //        renderer.draw(canvas, layout, startLine, endLine, startOffset, endOffset)
-        renderer.draw(canvas, paint, layout, startLine, endLine)
+        renderer.draw(canvas, context, paint, layout, startLine, endLine, startOffset, endOffset)
 
     }
 }
