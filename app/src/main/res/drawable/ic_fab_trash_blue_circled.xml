@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list
+        xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:drawable="@drawable/ic_fab_trash"/>
+    <item>
+        <shape android:shape="oval">
+
+            <stroke
+                    android:color="@color/blue_main"
+                    android:width="2dp"/>
+        </shape>
+    </item>
+
+</layer-list>

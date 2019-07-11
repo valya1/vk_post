@@ -61,12 +61,12 @@ internal abstract class TextRoundedBgRenderer(
 
                 backgroundDrawable.setBounds(
                     max(layout.getLineLeft(line).toInt() - horizontalPadding, 0),
-                    lineTop,
+                    lineTop + verticalPadding,
 //                    lineTop + if (line in startLine + 1 until endLine) horizontalPadding else 0,
                     min(layout.getLineRight(line).toInt() + horizontalPadding, layout.width),
-                    lineBottom - horizontalPadding
+                    lineBottom
                 )
-
+                Path().
 //                backgroundDrawable.setColorFilter(
 //                    ContextCompat.getColor(context, R.color.white_semitransparent),
 //                    PorterDuff.Mode.SCREEN
