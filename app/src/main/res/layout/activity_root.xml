@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
                 xmlns:tools="http://schemas.android.com/tools"
-                xmlns:app="http://schemas.android.com/apk/res-auto"
                 android:orientation="vertical"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
@@ -48,25 +47,26 @@
                     android:layout_above="@id/inputContainer"
                     android:layout_below="@id/toolbar">
 
-        <ScrollView android:layout_width="match_parent"
-                    android:layout_centerInParent="true"
-                    android:layout_height="wrap_content">
+        <ScrollView
+                android:id="@+id/scrollContainer"
+                android:layout_width="match_parent"
+                android:layout_centerInParent="true"
+                android:layout_height="wrap_content">
 
             <RelativeLayout
                     android:id="@+id/containerContent"
                     android:layout_width="match_parent"
                     android:layout_gravity="fill_vertical"
-                    android:background="@color/white"
                     android:layout_height="wrap_content">
 
 
                 <ImageView
-                        android:id="@+id/bgImage"
+                        android:id="@+id/imageBackround"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_height="match_parent"
                         android:layout_centerInParent="true"
                         android:adjustViewBounds="true"
-                        android:src="@drawable/beach"/>
+                        android:src="@drawable/white"/>
 
 
                 <com.example.vktests.text_backrounds.CustomBackgroundEditText
@@ -81,26 +81,18 @@
                         android:textColor="@color/black"
                         tools:text=""/>
 
-                <ImageSwitcher
-                        android:id="@+id/trashSwitcher"
-                        android:layout_alignBottom="@id/bgImage"
+                <ImageView
+                        android:id="@+id/imageTrash"
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
                         android:layout_centerHorizontal="true"
-                        android:layout_width="60dp"
-                        android:visibility="invisible"
+                        android:layout_alignBottom="@id/imageBackround"
                         android:layout_marginBottom="30dp"
-                        android:layout_height="60dp">
-
-                    <ImageView android:layout_width="match_parent"
-                               android:layout_height="match_parent"
-                               android:src="@drawable/ic_fab_trash"/>
-
-                    <ImageView android:layout_width="match_parent"
-                               android:layout_height="match_parent"
-                               android:src="@drawable/ic_fab_trash_released"/>
-
-                </ImageSwitcher>
+                        tools:src="@drawable/ic_fab_trash_blue_circled"
+                        />
 
             </RelativeLayout>
+
         </ScrollView>
 
     </RelativeLayout>

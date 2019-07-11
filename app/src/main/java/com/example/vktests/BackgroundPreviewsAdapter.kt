@@ -11,14 +11,18 @@ import android.graphics.drawable.GradientDrawable
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
+import com.example.vktests.data.UIResource
 
 
-class BackgroundPreviewsAdapter(val onItemCLickListener: ((Int) -> Unit)) :
+class BackgroundPreviewsAdapter(vararg backrounds: UIResource, val onItemCLickListener: ((Int) -> Unit)) :
     RecyclerView.Adapter<BackgroundPreviewsAdapter.BackgroundPreviewViewHolder>() {
 
-    private var prevSelectedPosition = -1
+    private var selectedPosition = 0
+    private val backroundResources: MutableList<UIResource> = backrounds.toMutableList()
 
-    private val backroundPreviewResources = arrayListOf<Int>()
+    init {
+        notifyDataSetChanged()
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BackgroundPreviewViewHolder {
         return BackgroundPreviewViewHolder(
@@ -26,41 +30,33 @@ class BackgroundPreviewsAdapter(val onItemCLickListener: ((Int) -> Unit)) :
         )
     }
 
-    override fun getItemCount() = backroundPreviewResources.size
+    override fun getItemCount() = backroundResources.size
 
     override fun onBindViewHolder(holder: BackgroundPreviewViewHolder, position: Int) {
-
-        holder.bind(backroundPreviewResources[position], false)
-
+        holder.bind(backroundResources[position].previewDrawableRes, position == selectedPosition)
     }
+
 
     override fun onBindViewHolder(holder: BackgroundPreviewViewHolder, position: Int, payloads: MutableList<Any>) {
         if (payloads.isEmpty()) {
             super.onBindViewHolder(holder, position, payloads)
         } else {
-            holder.bind(backroundPreviewResources[position], (payloads[0] as? Boolean) ?: false)
+            holder.bind(backroundResources[position].previewDrawableRes, payloads[0] as Boolean)
         }
     }
 
-    fun setBackgroundColors(backgroundResources: List<Int>) {
-        backroundPreviewResources.clear()
-        backroundPreviewResources.addAll(backgroundResources)
-        notifyDataSetChanged()
-    }
 
     fun setSelectedBackgroundPreview(position: Int) {
 
-        if (position == prevSelectedPosition) return
+        if (position == selectedPosition) return
 
-        if (prevSelectedPosition >= 0)
-            notifyItemChanged(prevSelectedPosition, false)
-
-        notifyItemChanged(position, true)
-        prevSelectedPosition = position
+        val prevPosition = selectedPosition
+        selectedPosition = position
+        notifyItemChanged(prevPosition, false)
+        notifyItemChanged(selectedPosition, true)
     }
 
-    @DrawableRes
-    fun getBackgroundRes(clickedPosition: Int) = backroundPreviewResources[clickedPosition]
+    fun getUIResource(position: Int) = backroundResources[position]
 
     inner class BackgroundPreviewViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
 

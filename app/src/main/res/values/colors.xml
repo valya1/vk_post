@@ -8,4 +8,5 @@
     <color name="blue_main">#528BCC</color>
 
     <color name="blue_text_bg_semi_transparent">#5CFFFFFF</color>
+    <color name="gray">#F2F2F2</color>
 </resources>
