@@ -13,10 +13,10 @@ import android.view.View.VISIBLE
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.DataSource
@@ -26,9 +26,15 @@ import com.bumptech.glide.request.target.Target
 import com.example.vktests.data.UIResource
 import com.example.vktests.data.TrashResource
 import com.example.vktests.test_views.StickerView
+import io.reactivex.Observable
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.Disposable
+import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_root.*
 import java.io.File
 import java.io.FileOutputStream
+import java.text.SimpleDateFormat
+import java.util.*
 
 
 class RootActivity : AppCompatActivity(), StickerListDialogFragment.Listener, StickerView.OnMoveListener {
@@ -41,10 +47,11 @@ class RootActivity : AppCompatActivity(), StickerListDialogFragment.Listener, St
 
     private var mIsTrashAppearingOrVisible = false
 
+    private var saveDisposable: Disposable? = null
+
 
     companion object {
         const val TRASH_DISMISS = "trash_dismiss"
-
         const val PERMISSION_REQUEST_CODE = 101
     }
 
@@ -52,7 +59,7 @@ class RootActivity : AppCompatActivity(), StickerListDialogFragment.Listener, St
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_root)
 
-        val testDrawable = ContextCompat.getDrawable(this, R.drawable.white_rect_semitransparent)
+        val testColor = R.color.white_semitransparent
 
         mBackgroundPreviewsAdapter = BackgroundPreviewsAdapter(
             UIResource(
@@ -61,46 +68,55 @@ class RootActivity : AppCompatActivity(), StickerListDialogFragment.Listener, St
                 trashResource = TrashResource.CustomTrash(
                     R.drawable.ic_fab_trash_blue_circled,
                     R.drawable.ic_fab_trash_blue_released_circled
-                )
+                ),
+                defaultTextColor = R.color.black
             ),
-            UIResource(R.drawable.blue),
-            UIResource(R.drawable.green),
-            UIResource(R.drawable.yellow_orange),
-            UIResource(R.drawable.purple),
-            UIResource(R.drawable.beach),
-            UIResource(R.drawable.stars)
+            UIResource(previewDrawableRes = R.drawable.blue, defaultTextColor = R.color.white),
+            UIResource(previewDrawableRes = R.drawable.green, defaultTextColor = R.color.white),
+            UIResource(previewDrawableRes = R.drawable.yellow_orange, defaultTextColor = R.color.white),
+            UIResource(previewDrawableRes = R.drawable.purple, defaultTextColor = R.color.white),
+            UIResource(previewDrawableRes = R.drawable.beach, defaultTextColor = R.color.white),
+            UIResource(previewDrawableRes = R.drawable.stars, defaultTextColor = R.color.white)
         ) { clickedPosition ->
 
             rvBackroundPreviews?.scrollToPosition(clickedPosition)
             mBackgroundPreviewsAdapter?.setSelectedBackgroundPreview(clickedPosition)
-            mBackgroundPreviewsAdapter?.getUIResource(clickedPosition)?.let(::setUIResource)
+            mBackgroundPreviewsAdapter?.getUIResource(clickedPosition)?.let(::setUIResources)
         }
             .also {
-                setUIResource(it.getUIResource(0))
+                setUIResources(it.getUIResource(0))
             }
 
         rvBackroundPreviews.layoutManager = LinearLayoutManager(this, LinearLayout.HORIZONTAL, false)
         rvBackroundPreviews.adapter = mBackgroundPreviewsAdapter
 
         btnChangeTextStyle.setOnClickListener {
-
-            textPost.setBackgroundTextDrawable(testDrawable)
-
-//            val spannableString = SpannableString(textPost.text)
-//            if (!spansIterator.hasNext()) {
-//                spansIterator = spans.iterator()
-//            }
-//            spannableString.setSpan(spansIterator.next(), 0, textPost.text.length, SPAN_EXCLUSIVE_EXCLUSIVE)
-//            textPost.setText(spannableString)
+            textPost.setBackgroundColorFotText(testColor)
         }
 
         btnAddSticker.setOnClickListener {
-            StickerListDialogFragment.newInstance(24)
-                .show(supportFragmentManager, "stickers_dialog")
+            if (supportFragmentManager.findFragmentByTag("stickers_dialog") == null) {
+                StickerListDialogFragment.newInstance(24)
+                    .show(supportFragmentManager, "stickers_dialog")
+            }
         }
 
         btnSave.setOnClickListener {
             startImageSaving()
+        }
+
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+
+        saveDisposable?.dispose()
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == PERMISSION_REQUEST_CODE && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            saveImage()
         }
 
     }
@@ -132,12 +148,12 @@ class RootActivity : AppCompatActivity(), StickerListDialogFragment.Listener, St
             }
         }
 
-        if (imageTrash.isVisible) {
+        if (mIsTrashAppearingOrVisible) {
             with(imageTrash) {
                 if (stickerCenterX in x..(x + width) && stickerCenterY in y..(y + width)) {
                     imageTrash.setImageResource(mUIResource.trashResource.releasedTrashDrawableRes)
                     sticker.scheduleUniqueDelayedAction(delay = 700) {
-                        animateAlphaDismissWithCallback { containerContent.removeView(this) }
+                        animateStickerDismissWithCallback { containerContent.removeView(this) }
                     }
 
                 } else {
@@ -148,9 +164,10 @@ class RootActivity : AppCompatActivity(), StickerListDialogFragment.Listener, St
         }
     }
 
-    fun setUIResource(resource: UIResource) {
+    fun setUIResources(resource: UIResource) {
         mUIResource = resource
         imageBackround?.setImageResource(resource.originalDrawableRes)
+        textPost.setTextColor(ContextCompat.getColor(this, resource.defaultTextColor))
     }
 
 
@@ -198,43 +215,61 @@ class RootActivity : AppCompatActivity(), StickerListDialogFragment.Listener, St
 
     fun saveImage() {
 
-        val path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+        saveDisposable = Observable.fromCallable {
+            with(containerContent) {
+                layout(left, top, right, bottom)
+                val image = Bitmap.createBitmap(measuredWidth, measuredHeight, Bitmap.Config.ARGB_8888)
+                val canvas = Canvas(image)
+                draw(canvas)
 
-        with(containerContent) {
-            layout(left, top, right, bottom)
-            val image = Bitmap.createBitmap(measuredWidth, measuredHeight, Bitmap.Config.ARGB_8888)
-            val canvas = Canvas(image)
-            draw(canvas)
+                var out: FileOutputStream? = null
+                val path =
+                    "${Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)}/vkPostLite/"
+                val fileName = "IMG_${getCurrentDate()}.jpg"
 
-            var out: FileOutputStream? = null
-
-            try {
-                File("$path/vkPost/")
-                    .run {
-                        mkdirs()
-                        val imageFile = File(this, "vk_post.jpg")
-                        out = FileOutputStream(imageFile)
-                        image.compress(Bitmap.CompressFormat.JPEG, 100, out)
-                    }
-            } finally {
-                out?.flush()
-                out?.close()
+                try {
+                    File("$path/vkPost/")
+                        .run {
+                            mkdirs()
+                            out = FileOutputStream(File(this, fileName))
+                            image.compress(Bitmap.CompressFormat.JPEG, 100, out)
+                        }
+                } finally {
+                    out?.flush()
+                    out?.close()
+                }
+                path + fileName
             }
         }
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .doOnSubscribe {
+                //todo show spinner
+            }
+            .doOnTerminate { /**todo hide spinner **/ }
+            .subscribe(
+                { filePath ->
+                    Toast.makeText(this, "Картинка добавлена: $filePath", Toast.LENGTH_LONG).show()
+                },
+                { throwable ->
+                    Toast.makeText(this, throwable.message, Toast.LENGTH_LONG).show()
+                }
+            )
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == PERMISSION_REQUEST_CODE && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            saveImage()
+
+    fun getCurrentDate(): String {
+        return Calendar.getInstance().run {
+            SimpleDateFormat("YYYYMMdd_HHmmss", Locale.getDefault()).format(time)
         }
 
     }
 
-
-    fun View.animateAlphaDismissWithCallback(duration: Long = 100, onAnimationCompleteBlock: View.() -> Unit) =
+    fun View.animateStickerDismissWithCallback(duration: Long = 150, onAnimationCompleteBlock: View.() -> Unit) =
         animate()
             .alpha(0.0f)
+            .scaleX(0.0f)
+            .scaleY(0.0f)
             .setDuration(duration)
             .withEndAction { onAnimationCompleteBlock() }
             .start()

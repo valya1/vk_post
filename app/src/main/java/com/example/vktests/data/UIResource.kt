@@ -1,11 +1,13 @@
 package com.example.vktests.data
 
+import androidx.annotation.ColorRes
 import androidx.annotation.DrawableRes
 import com.example.vktests.R
 
 data class UIResource(
     @DrawableRes val previewDrawableRes: Int,
     @DrawableRes val originalDrawableRes: Int = previewDrawableRes,
+    @ColorRes val defaultTextColor: Int,
     val trashResource: TrashResource = TrashResource.DefaultTrash
 )
 

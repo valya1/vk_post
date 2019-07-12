@@ -24,38 +24,30 @@ class CustomBackgroundEditText : AppCompatEditText {
 
     private var paint = Paint().apply {
         color = ContextCompat.getColor(context, R.color.blue_text_bg_semi_transparent)
-        xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC)
     }
 
     override fun onDraw(canvas: Canvas) {
 
         if (customBackgroundTextHelper != null) {
             canvas.withTranslation(totalPaddingLeft.toFloat(), totalPaddingTop.toFloat()) {
-                customBackgroundTextHelper?.draw(canvas, context, paint, text as Spanned, layout)
+                customBackgroundTextHelper?.draw(canvas, paint, text as Spanned, layout)
             }
         }
 
         super.onDraw(canvas)
     }
 
-    fun setBackgroundTextDrawable(drawable: Drawable?) {
-        if (drawable != null) {
+    fun setBackgroundColorFotText(@ColorRes color: Int?) {
+        if (color != null) {
             customBackgroundTextHelper = CustomBackgroundTextHelper(
+                context = context,
                 horizontalPadding = paddingRight,
-                verticalPadding = 10,
-                backgroundDrawable = drawable
+                verticalPadding = paddingBottom,
+                backgroundColor = color
             )
         } else {
             customBackgroundTextHelper = null
         }
         invalidate()
-    }
-
-    fun setBackroundColor(@ColorRes colorId: Int) {
-        paint = Paint().apply {
-            color = ContextCompat.getColor(this@CustomBackgroundEditText.context, colorId)
-            isAntiAlias = true
-        }
-
     }
 }

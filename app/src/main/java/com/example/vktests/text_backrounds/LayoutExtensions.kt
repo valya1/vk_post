@@ -1,5 +1,6 @@
 package com.example.vktests.text_backrounds
 
+import android.graphics.Rect
 import android.os.Build
 import android.text.Layout
 

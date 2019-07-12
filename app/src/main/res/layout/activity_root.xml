@@ -66,6 +66,7 @@
                         android:layout_height="match_parent"
                         android:layout_centerInParent="true"
                         android:adjustViewBounds="true"
+                        tools:src="@drawable/beach"
                         android:src="@drawable/white"/>
 
 
@@ -76,10 +77,13 @@
                         android:layout_centerInParent="true"
                         android:textAlignment="center"
                         android:textSize="24sp"
+                        android:layout_marginEnd="8dp"
+                        android:layout_marginStart="8dp"
                         android:background="@null"
+                        android:padding="5dp"
                         android:hint="Что у вас нового?"
                         android:textColor="@color/black"
-                        tools:text=""/>
+                        tools:text="Всем привет"/>
 
                 <ImageView
                         android:id="@+id/imageTrash"
