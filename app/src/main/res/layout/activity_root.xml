@@ -24,6 +24,19 @@
                 android:layout_marginStart="5dp"
                 />
 
+        <TextView android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:layout_toStartOf="@id/btnAddSticker"
+                  android:layout_toLeftOf="@id/btnAddSticker"
+                  android:gravity="center"
+                  android:layout_toRightOf="@id/btnChangeTextStyle"
+                  android:layout_toEndOf="@id/btnChangeTextStyle"
+                  android:textColor="@color/black"
+                  android:textAllCaps="false"
+                  android:layout_centerInParent="true"
+                  android:text="@string/new_post_text"
+                />
+
         <ImageButton
                 android:id="@+id/btnAddSticker"
                 android:layout_width="50dp"
@@ -42,7 +55,7 @@
 
 
     <RelativeLayout android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
                     android:background="@color/white"
                     android:layout_above="@id/inputContainer"
                     android:layout_below="@id/toolbar">
@@ -50,6 +63,7 @@
         <ScrollView
                 android:id="@+id/scrollContainer"
                 android:layout_width="match_parent"
+                android:fillViewport="true"
                 android:layout_centerInParent="true"
                 android:layout_height="wrap_content">
 
@@ -63,20 +77,23 @@
                 <ImageView
                         android:id="@+id/imageBackround"
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent"
+                        android:layout_height="wrap_content"
                         android:layout_centerInParent="true"
+                        android:scaleType="fitStart"
                         android:adjustViewBounds="true"
                         tools:src="@drawable/beach"
                         android:src="@drawable/white"/>
 
 
-                <com.example.vktests.text_backrounds.CustomBackgroundEditText
+                <ru.miha.vk_post.text_backrounds.CustomBackgroundEditText
                         android:id="@+id/textPost"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_centerInParent="true"
                         android:textAlignment="center"
+                        android:inputType="textMultiLine"
                         android:textSize="24sp"
+                        android:textStyle="bold"
                         android:layout_marginEnd="8dp"
                         android:layout_marginStart="8dp"
                         android:background="@null"
@@ -84,6 +101,15 @@
                         android:hint="Что у вас нового?"
                         android:textColor="@color/black"
                         tools:text="Всем привет"/>
+
+
+                <ProgressBar
+                        android:id="@+id/progressBar"
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:layout_centerInParent="true"
+                        android:visibility="gone"
+                        />
 
                 <ImageView
                         android:id="@+id/imageTrash"

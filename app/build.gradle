@@ -6,18 +6,46 @@ apply plugin: 'kotlin-android-extensions'
 android {
     compileSdkVersion 28
     buildToolsVersion "28.0.3"
+
     defaultConfig {
-        applicationId "com.example.vktests"
+        applicationId "ru.miha.vk_post"
         minSdkVersion 16
         targetSdkVersion 28
         versionCode 1
         versionName "1.0"
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        signingConfigs {
+            release {
+                keyAlias 'vkpost'
+                keyPassword 'vkpost'
+                storeFile file('key/VKPostLite')
+                storePassword 'vkpost'
+            }
+        }
+
+
+        android.applicationVariants.all { variant ->
+            variant.outputs.all { output ->
+                def outputFile = output.outputFile
+                if (outputFile != null && outputFile.name.endsWith('.apk')) {
+                    def fileName = "ru.miha.vk_post ${variant.versionName} (${variant.versionCode}).apk"
+                    outputFileName = fileName
+                }
+            }
+        }
+
     }
     buildTypes {
         release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
+        }
+
+        debug {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
     }
 }
