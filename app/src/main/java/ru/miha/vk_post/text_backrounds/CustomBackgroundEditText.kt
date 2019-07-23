@@ -80,7 +80,7 @@ class CustomBackgroundEditText : AppCompatEditText {
                             mBottomRoundedCornersDrawable.drawOnLine(
                                 canvas,
                                 lineLeft.toInt(),
-                                lineTop + halfVerticalPadding.toInt(),
+                                lineTop + Math.ceil(halfVerticalPadding.toDouble()).toInt(),
                                 lineRight,
                                 lineBottom - halfVerticalPadding.toInt()
                             )
@@ -92,7 +92,7 @@ class CustomBackgroundEditText : AppCompatEditText {
                                 lineLeft.toInt(),
                                 lineTop + halfVerticalPadding.toInt(),
                                 lineRight,
-                                lineBottom - halfVerticalPadding.toInt()
+                                lineBottom - Math.ceil(halfVerticalPadding.toDouble()).toInt()
                             )
                         }
 
@@ -100,11 +100,10 @@ class CustomBackgroundEditText : AppCompatEditText {
                             mNotRoundedCornersDrawable.drawOnLine(
                                 canvas,
                                 lineLeft.toInt(),
-                                lineTop + halfVerticalPadding.toInt(),
+                                lineTop + Math.ceil(halfVerticalPadding.toDouble()).toInt(),
                                 lineRight,
-                                lineBottom - halfVerticalPadding.toInt()
+                                lineBottom -  Math.ceil(halfVerticalPadding.toDouble()).toInt()
                             )
-
                         }
                     }
 

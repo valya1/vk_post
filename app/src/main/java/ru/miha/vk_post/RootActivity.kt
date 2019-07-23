@@ -129,6 +129,8 @@ class RootActivity : AppCompatActivity(), StickerListDialogFragment.Listener, St
     override fun onDestroy() {
         super.onDestroy()
         saveDisposable?.dispose()
+        mRunnables.clear()
+        mUiHandler.removeCallbacksAndMessages(null)
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
@@ -233,6 +235,7 @@ class RootActivity : AppCompatActivity(), StickerListDialogFragment.Listener, St
     fun saveImage() {
         with(containerContent) {
             textPost.isCursorVisible = false
+            imageTrash.visibility = View.GONE
             layout(left, top, right, bottom)
             val image = Bitmap.createBitmap(measuredWidth, measuredHeight, Bitmap.Config.ARGB_8888)
             val canvas = Canvas(image)
@@ -267,6 +270,7 @@ class RootActivity : AppCompatActivity(), StickerListDialogFragment.Listener, St
             .doOnTerminate {
                 progressBar.isVisible = false
                 textPost.isCursorVisible = true
+                imageTrash.visibility = VISIBLE
             }
             .subscribe(
                 { filePath ->
@@ -341,14 +345,14 @@ class RootActivity : AppCompatActivity(), StickerListDialogFragment.Listener, St
     ) {
         (tag as? String)?.run {
             if (!mRunnables.containsKey(tag)) {
-                mRunnables[tag] = Runnable { action() }.also { handler.postDelayed(it, delay) }
+                mRunnables[tag] = Runnable { action() }.also { mUiHandler.postDelayed(it, delay) }
             }
         }
     }
 
     fun View.cancelUniqueDelayedAction(tag: String = this.tag as String) {
         if (mRunnables.containsKey(tag)) {
-            mRunnables[tag]?.run(handler::removeCallbacks)
+            mRunnables[tag]?.run(mUiHandler::removeCallbacks)
             mRunnables.remove(tag)
         }
     }
